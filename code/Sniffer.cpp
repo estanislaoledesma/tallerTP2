@@ -23,6 +23,69 @@ Sniffer::~Sniffer(){
     packagesFile.close();
 }
 
+void Sniffer::sniff() {
+    uint64_t line = 0, src = 0, dst = 0;
+    uint16_t packLen = 0, id = 0, offset = 0;
+    bool MF = false;
+    std::stringstream data, lineStream;
+    std::string dataString;
+    int step = 0;
+    while(packagesFile.good()) { // DATA RACE
+        packagesFile.readsome(reinterpret_cast<char *>(&line), 4);
+        std::cout << (uint16_t)line;
+        std::cout << "\n";
+        line = ntohl(line);
+        std::cout << (uint16_t)line;
+        std::cout << "\n";
+        //std::cout << line;
+        //std::cout << "\n";
+        std::cout << "STEP: ";
+        std::cout << step;
+        std::cout << "\n";
+        switch(step) {
+            case 0:
+                packLen = (uint16_t)line;
+                step++;
+                break;
+            case 1:
+                id = line << 16;
+                offset = line >> 13;
+                MF = ((line & 0x00002000) << 19) == 1;
+                step++;
+                break;
+            case 2:
+                step++;
+                break;
+            case 3:
+                src = line;
+                step++;
+                packLen -= 0x14;
+                break;
+            case 4:
+                dst = line;
+                step++;
+                packLen -= 0x4;
+                break;
+            default:
+                data << std::hex << line;
+        }
+        //std::cout << "LEN: ";
+        //std::cout << std::hex << packLen;
+        //std::cout << "\n";
+        //std::cout << data.str();
+        if (packLen == 0) {
+            dataString = data.str();
+            std::cout << "String: ";
+            std::cout << dataString;
+            std::cout << "\n";
+            Package package = Package(src, dst, dataString, MF, offset);
+            assembler.addPackage(id, package);
+            data.str("");
+            step = 0;
+        }
+    }
+}
+
 void Sniffer::sniff1() {
     while (packagesFile.good()) {
         std::vector<uint32_t> header(HEADERBTS);
