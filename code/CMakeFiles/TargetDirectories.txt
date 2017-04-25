@@ -1,0 +1,3 @@
+/home/estanislao/Facultad/Taller/TP2/code/CMakeFiles/rebuild_cache.dir
+/home/estanislao/Facultad/Taller/TP2/code/CMakeFiles/edit_cache.dir
+/home/estanislao/Facultad/Taller/TP2/code/CMakeFiles/code.dir
